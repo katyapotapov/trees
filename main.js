@@ -14,9 +14,9 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // Now we initialize the L-system with the axiom
-const axiom = "F";
-const rules = { F: "F[-F][+F]" };
-const angle = (20 * Math.PI) / 180;
+const axiom = "X";
+const rules = { F: "FF", X: "F-[[X]+X]+F[+FX]-X" };
+const angle = (22.5 * Math.PI) / 180;
 
 function lSystemForN(axiom, rules, n) {
   let curState = axiom;
@@ -39,7 +39,7 @@ function lSystemForN(axiom, rules, n) {
   return curState;
 }
 
-let lSystem = lSystemForN(axiom, rules, 3);
+let lSystem = lSystemForN(axiom, rules, 4);
 
 // lSystem = "F+F+F";
 console.log(lSystem);
@@ -56,8 +56,8 @@ function addCylinder(posX, posY, posZ, rot) {
   return cylinder;
 }
 
-camera.position.z = 200;
-camera.position.y = 20;
+camera.position.z = 700;
+camera.position.y = 400;
 
 const tree = new THREE.Group();
 
