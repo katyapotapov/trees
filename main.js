@@ -13,6 +13,34 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
+// Now we initialize the L-system with the axiom
+const axiom = "F";
+const rules = { F: "F[-F][+F]" };
+const angle = 25;
+
+function lSystemForN(axiom, rules, n) {
+  let curState = axiom;
+  let nextState = "";
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < curState.length; j++) {
+      let dirReplaced = false;
+      for (const [k, v] of Object.entries(rules)) {
+        if (curState[j] == k) {
+          nextState += v;
+          dirReplaced = true;
+          break;
+        }
+      }
+      if (!dirReplaced) nextState += curState[j];
+    }
+    curState = nextState;
+    nextState = "";
+  }
+  return curState;
+}
+
+console.log(lSystemForN(axiom, rules, 5));
+
 function addCylinder(posX, posY, rot) {
   const geometry = new THREE.CylinderGeometry(1, 1, 20, 32);
 
