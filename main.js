@@ -99,7 +99,7 @@ const material = new THREE.MeshBasicMaterial({
   side: THREE.DoubleSide,
 });
 const ground = new THREE.Mesh(geometry, material);
-// scene.add(ground);
+scene.add(ground);
 
 function animate() {
   tree.rotateY(0.005);
