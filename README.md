@@ -1,4 +1,4 @@
-Tree so far - uses binary tree L-system, expanded to 3D:
+Tree so far - uses binary tree L-system, expanded to 3D (so it's a 6-ary tree now):
 
 https://github.com/katyapotapov/trees/assets/6101008/e6fbf5a0-3916-445d-a33a-5508c8c1393e
 
