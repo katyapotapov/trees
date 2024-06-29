@@ -49,8 +49,8 @@ console.log(lSystem);
 
 const cylinderHeight = 50;
 
-function addCylinder(posX, posY, posZ, rotX, rotY, rotZ) {
-  const geometry = new THREE.CylinderGeometry(1, 1, cylinderHeight, 32);
+function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB) {
+  const geometry = new THREE.CylinderGeometry(radT, radB, cylinderHeight, 32);
 
   geometry.translate(0, cylinderHeight / 2, 0);
   const material = new THREE.MeshBasicMaterial({ color: 0x382921 });
@@ -82,7 +82,9 @@ function parseLSystem(lSystem, angle) {
         curPos[2],
         curAngle[0],
         curAngle[1],
-        curAngle[2]
+        curAngle[2],
+        5 - posStack.length - 1,
+        5 - posStack.length
       );
       tree.add(cylinder);
       // curPos[0] -= Math.sin(curAngle[1]) * cylinderHeight;
