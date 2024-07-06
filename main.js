@@ -20,6 +20,7 @@ const axiom = "F";
 const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
 // const angle = (22.5 * Math.PI) / 180;
 const angle = (20 * Math.PI) / 180;
+const n = 4;
 
 function lSystemForN(axiom, rules, n) {
   let curState = axiom;
@@ -42,7 +43,7 @@ function lSystemForN(axiom, rules, n) {
   return curState;
 }
 
-let lSystem = lSystemForN(axiom, rules, 3);
+let lSystem = lSystemForN(axiom, rules, n);
 
 // lSystem = "F#$$$$$+F#+F#+F#+F#+F";
 console.log(lSystem);
@@ -69,7 +70,7 @@ camera.position.y = 100;
 
 const tree = new THREE.Group();
 
-function parseLSystem(lSystem, angle) {
+function parseLSystem(lSystem, angle, n) {
   let posStack = [[0, 0, 0]];
   let angleStack = [[0, 0, 0]];
   for (let i = 0; i < lSystem.length; i++) {
@@ -83,8 +84,8 @@ function parseLSystem(lSystem, angle) {
         curAngle[0],
         curAngle[1],
         curAngle[2],
-        5 - posStack.length - 1,
-        5 - posStack.length
+        n + 2 - posStack.length - 1,
+        n + 2 - posStack.length
       );
       tree.add(cylinder);
       // curPos[0] -= Math.sin(curAngle[1]) * cylinderHeight;
@@ -115,7 +116,7 @@ function parseLSystem(lSystem, angle) {
   }
 }
 
-parseLSystem(lSystem, angle);
+parseLSystem(lSystem, angle, n);
 
 // tree.add(addCylinder(0, 0, 0));
 // tree.add(addCylinder(0, 10, 20));
