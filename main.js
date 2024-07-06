@@ -6,7 +6,7 @@ const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  1000
+  2000
 );
 
 const renderer = new THREE.WebGLRenderer();
@@ -17,10 +17,19 @@ document.body.appendChild(renderer.domElement);
 // const axiom = "X";
 // const rules = { F: "FF", X: "F-[[X]++X]+F[+FX]-X" };
 const axiom = "F";
-const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
+// const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
+// const rules = {
+//   F: "F-[+F#F]+[-F-F]#[-F$F]$[+F+F]*[*F+F]&[-F+F]", // Rule to elongate and create branches
+//   X: "F[+X][-X][#X][$X][*X][&X]FX", // Extending complexity for further iterations
+// };
+const rules = {
+  F: "F&[-F$F][#X+F]&[*F+F]X", // Rule to elongate and create branches
+  X: "F[+X][#X][*F][&X]FX", // Extending complexity for further iterations
+};
 // const angle = (22.5 * Math.PI) / 180;
 const angle = (20 * Math.PI) / 180;
-const n = 3;
+const n = 4;
+const thickness = 3;
 
 function lSystemForN(axiom, rules, n) {
   let curState = axiom;
@@ -65,7 +74,7 @@ function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB) {
 
 const tree = new THREE.Group();
 
-function parseLSystem(lSystem, angle, n) {
+function parseLSystem(lSystem, angle, n, thickness) {
   let posStack = [[0, 0, 0]];
   let angleStack = [[0, 0, 0]];
   for (let i = 0; i < lSystem.length; i++) {
@@ -79,8 +88,8 @@ function parseLSystem(lSystem, angle, n) {
         curAngle[0],
         curAngle[1],
         curAngle[2],
-        n + 2 - posStack.length - 1,
-        n + 2 - posStack.length
+        n + thickness - posStack.length - 1,
+        n + thickness - posStack.length
       );
       tree.add(cylinder);
       // curPos[0] -= Math.sin(curAngle[1]) * cylinderHeight;
@@ -111,7 +120,7 @@ function parseLSystem(lSystem, angle, n) {
   }
 }
 
-parseLSystem(lSystem, angle, n);
+parseLSystem(lSystem, angle, n, thickness);
 
 // tree.add(addCylinder(0, 0, 0));
 // tree.add(addCylinder(0, 10, 20));
@@ -128,17 +137,20 @@ scene.add(ground);
 
 // camera.position.z = 700;
 // camera.position.y = 400;
-camera.position.z = 100;
-camera.position.y = 100;
+camera.position.z = 800;
+camera.position.y = 500;
 function updateCameraFocus() {
   const box = new THREE.Box3().setFromObject(tree);
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z);
   const fov = camera.fov * (Math.PI / 180);
-  let cameraZ = Math.abs((maxDim / 1) * Math.tan(fov * 2)); // Adjust the 1 to set how far back you want the camera
+  console.log(fov);
+  console.log(maxDim);
+  console.log(size.x, size.y, size.z);
+  let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)); // Get the trigonometric distance to fit the whole tree in the FOV
+  cameraZ *= 1.8; // Move the camera further back to fit the tree comfortably
 
-  cameraZ *= 2; // Optional: increase this multiplier to move the camera further back
   camera.position.z = center.z + cameraZ;
   camera.position.x = center.x;
   camera.position.y = center.y;
