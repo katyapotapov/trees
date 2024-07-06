@@ -11,17 +11,23 @@ https://github.com/katyapotapov/trees/assets/6101008/92933aac-9140-4d2a-bbe9-81d
 # Todos
 
 ## Highest priority
+
 - [ ] Add different branch lengths, especially for trunk
 - [ ] L system editor/toggler
+  - Make sure the L system is actually legible to somebody editing it (eg +Y / -Y instead of $ / &)
 - [ ] Sliders for all other parameters
 - [ ] Add more L systems
   - What are the limits of L systems for designing realistic trees? e.g. we can't really express a long trunk with an L system (although this could be solved with branch length)
 
 ## Second priority
+
 - [ ] Add leaves
 - [ ] Add different leaf/bark colours
+- [ ] Allow branch radius to be tapered via a function (ie log)
+- [ ] Maybe angle too
 
 ## Nice to haves
+
 - [ ] Add cool background and ground (like aurora borealis, sunset type situation)
 - [ ] Maybe even add some particles moving through the scene? Weather appropriate, snowflakes or pollen
 - [ ] Add physics and precip/weather (the tree should respond to wind/rain/snow to look more natural)
