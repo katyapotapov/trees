@@ -20,7 +20,7 @@ const axiom = "F";
 const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
 // const angle = (22.5 * Math.PI) / 180;
 const angle = (20 * Math.PI) / 180;
-const n = 4;
+const n = 3;
 
 function lSystemForN(axiom, rules, n) {
   let curState = axiom;
@@ -62,11 +62,6 @@ function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB) {
 
   return cylinder;
 }
-
-// camera.position.z = 700;
-// camera.position.y = 400;
-camera.position.z = 200;
-camera.position.y = 100;
 
 const tree = new THREE.Group();
 
@@ -130,6 +125,26 @@ const material = new THREE.MeshBasicMaterial({
 });
 const ground = new THREE.Mesh(geometry, material);
 scene.add(ground);
+
+// camera.position.z = 700;
+// camera.position.y = 400;
+camera.position.z = 100;
+camera.position.y = 100;
+function updateCameraFocus() {
+  const box = new THREE.Box3().setFromObject(tree);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const fov = camera.fov * (Math.PI / 180);
+  let cameraZ = Math.abs((maxDim / 1) * Math.tan(fov * 2)); // Adjust the 1 to set how far back you want the camera
+
+  cameraZ *= 2; // Optional: increase this multiplier to move the camera further back
+  camera.position.z = center.z + cameraZ;
+  camera.position.x = center.x;
+  camera.position.y = center.y;
+  camera.lookAt(center); // Ensure the camera is always looking at the center of the tree
+}
+updateCameraFocus(); // Just need to update the camera once at the start
 
 function animate() {
   tree.rotateY(0.005);
