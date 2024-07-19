@@ -8,6 +8,7 @@ https://github.com/katyapotapov/trees/assets/6101008/176778b0-e3c1-4e19-b765-dd9
 ## Highest priority
 
 - [x] Add different branch lengths, especially for trunk
+- [ ] Try parametric systems for tree generation
 - [ ] L system editor/toggler
   - Make sure the L system is actually legible to somebody editing it (eg +Y / -Y instead of $ / &)
 - [ ] Sliders for all other parameters
