@@ -176,17 +176,18 @@ function createHill(x, z, height, baseRadius, topRadius) {
     height,
     64
   );
-  const hillMaterial = new THREE.MeshBasicMaterial({ color: 0x71c235 });
+  const hillMaterial = new THREE.MeshBasicMaterial({ color: 0x72ba32 });
   const hill = new THREE.Mesh(hillGeometry, hillMaterial);
 
   hill.position.set(x, height / 2, z);
   scene.add(hill);
 }
-for (let i = 0; i < 50; i++) {
-  const x = (i / 50) * 200000 - 100000; // Random position in x
-  const z = Math.random() * 8000 - 40000; // Random position in z
-  const height = Math.random() * 5000 + 5000; // Random height between 300 and 500
-  const baseRadius = Math.random() * 20000 + 800; // Base radius between 800 and 1000
+const numHills = 20;
+for (let i = 0; i < numHills; i++) {
+  const x = (i / numHills) * 200000 - 100000; // * 200000 - 100000;
+  const z = Math.random() * 8000 - 50000; // Random position in z
+  const height = Math.random() * 3000 + 5000; // Random height between 300 and 500
+  const baseRadius = 20000 + 800; // Base radius between 800 and 1000
   const topRadius = Math.random() * 1000 + 700; // Top radius between 700 and 800
 
   createHill(x, z, height, baseRadius, topRadius);
@@ -197,7 +198,7 @@ textureLoader.load(
   "data/green-grass-texture.jpg", // Make sure this path is correct
   function (texture) {
     texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-    texture.repeat.set(10, 10);
+    texture.repeat.set(5, 5);
 
     const geometry = new THREE.PlaneGeometry(100000, 100000);
     const material = new THREE.MeshBasicMaterial({
@@ -213,6 +214,11 @@ textureLoader.load(
     console.error("An error occurred loading the texture:", err);
   }
 );
+
+const nearDistance = 10000;
+const farDistance = 100000;
+scene.fog = new THREE.Fog(0xffffff, nearDistance, farDistance);
+
 // camera.position.z = 700;
 // camera.position.y = 400;
 camera.position.z = 800;
