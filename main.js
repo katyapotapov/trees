@@ -1,12 +1,24 @@
 import * as THREE from "three";
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x19c2ff);
+
+const loader = new THREE.CubeTextureLoader();
+const texture = loader.load([
+  "data/Daylight Box_Right.bmp",
+  "data/Daylight Box_Left.bmp",
+  "data/Daylight Box_Top.bmp",
+  "data/Daylight Box_Bottom.bmp",
+  "data/Daylight Box_Front.bmp",
+  "data/Daylight Box_Back.bmp",
+]);
+
+scene.background = texture;
+
 const camera = new THREE.PerspectiveCamera(
   75,
   window.innerWidth / window.innerHeight,
   0.1,
-  8000
+  800000
 );
 
 const renderer = new THREE.WebGLRenderer();
@@ -19,7 +31,7 @@ document.body.appendChild(renderer.domElement);
 const axiom = "F";
 // const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
 const rules = {
-  F: "F$[-F+X]&[#X+F]*[-X$F]#[+X+F]", // Rule to elongate and create branches
+  F: "F$[-F+X]&[#X+F]*[-X]#[+X-F+X]", // Rule to elongate and create branches
   X: "F[$F][*X][&X]X", // Extending complexity for further iterations
 };
 // const axiom = "F";
@@ -33,10 +45,10 @@ const n = 4;
 const thickness = 1;
 const thicknessMultiple = 6;
 const height = 100;
-const trunkMultiple = 3;
-const trunkThicknessMultiple = 2;
+const trunkMultiple = 5;
+const trunkThicknessMultiple = 3;
 
-var seed = 1213123212414;
+var seed = Math.random() * 1000;
 function random() {
   var x = Math.sin(seed++) * 10000;
   return x - Math.floor(x);
@@ -157,15 +169,50 @@ parseLSystem(lSystem, angle, height);
 // tree.add(addCylinder(0, 10, 20));
 scene.add(tree);
 
-const geometry = new THREE.PlaneGeometry(10000, 10000);
-geometry.rotateX(THREE.MathUtils.degToRad(90));
-const material = new THREE.MeshBasicMaterial({
-  color: 0x6beb34,
-  side: THREE.DoubleSide,
-});
-const ground = new THREE.Mesh(geometry, material);
-scene.add(ground);
+function createHill(x, z, height, baseRadius, topRadius) {
+  const hillGeometry = new THREE.CylinderGeometry(
+    topRadius,
+    baseRadius,
+    height,
+    64
+  );
+  const hillMaterial = new THREE.MeshBasicMaterial({ color: 0x71c235 });
+  const hill = new THREE.Mesh(hillGeometry, hillMaterial);
 
+  hill.position.set(x, height / 2, z);
+  scene.add(hill);
+}
+for (let i = 0; i < 50; i++) {
+  const x = (i / 50) * 200000 - 100000; // Random position in x
+  const z = Math.random() * 8000 - 40000; // Random position in z
+  const height = Math.random() * 5000 + 5000; // Random height between 300 and 500
+  const baseRadius = Math.random() * 20000 + 800; // Base radius between 800 and 1000
+  const topRadius = Math.random() * 1000 + 700; // Top radius between 700 and 800
+
+  createHill(x, z, height, baseRadius, topRadius);
+}
+
+const textureLoader = new THREE.TextureLoader();
+textureLoader.load(
+  "data/green-grass-texture.jpg", // Make sure this path is correct
+  function (texture) {
+    texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(10, 10);
+
+    const geometry = new THREE.PlaneGeometry(100000, 100000);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.DoubleSide,
+    });
+    const ground = new THREE.Mesh(geometry, material);
+    ground.rotation.x = -Math.PI / 2; // Rotate to make it horizontal
+    scene.add(ground);
+  },
+  undefined,
+  function (err) {
+    console.error("An error occurred loading the texture:", err);
+  }
+);
 // camera.position.z = 700;
 // camera.position.y = 400;
 camera.position.z = 800;
