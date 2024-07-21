@@ -176,27 +176,7 @@ function createHill(x, z, height, baseRadius, topRadius) {
     height,
     64
   );
-  const vertexShader = `
-    varying float vHeight;
-    void main() {
-        vHeight = position.y / 6000.0; // Normalize height based on expected max height of hills
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }
-  `;
-  const fragmentShader = `
-    varying float vHeight;
-    void main() {
-        vec3 hillColor = vec3(0.13, 0.55, 0.13); // Dark green
-        vec3 fogColor = vec3(1.0, 1.0, 1.0); // White
-        float mixFactor = smoothstep(0.0, 1.0, vHeight); // Smooth transition based on height
-        vec3 color = mix(hillColor, fogColor, mixFactor);
-        gl_FragColor = vec4(color, 1.0);
-    }
-    `;
-  const hillMaterial = new THREE.ShaderMaterial({
-    vertexShader: vertexShader,
-    fragmentShader: fragmentShader,
-  });
+  const hillMaterial = new THREE.MeshBasicMaterial({ color: 0x72ba32 });
   const hill = new THREE.Mesh(hillGeometry, hillMaterial);
 
   hill.position.set(x, height / 2, z);
@@ -237,7 +217,7 @@ textureLoader.load(
 
 const nearDistance = 10000;
 const farDistance = 100000;
-//scene.fog = new THREE.Fog(0xffffff, nearDistance, farDistance);
+scene.fog = new THREE.Fog(0xffffff, nearDistance, farDistance);
 
 // camera.position.z = 700;
 // camera.position.y = 400;
