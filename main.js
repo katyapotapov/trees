@@ -31,8 +31,7 @@ document.body.appendChild(renderer.domElement);
 const axiom = "F";
 // const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
 const rules = {
-  F: "F$[-F+X]&[#X+F]*[-X]#[+X-F+X]", // Rule to elongate and create branches
-  X: "F[$F][*X][&X]X", // Extending complexity for further iterations
+  F: "F-F+F#F", // Rule to elongate and create branches
 };
 // const axiom = "F";
 // const rules = {
@@ -41,7 +40,7 @@ const rules = {
 // };
 // const angle = (22.5 * Math.PI) / 180;
 const angle = (29 * Math.PI) / 180;
-const n = 4;
+const n = 3;
 const thickness = 1;
 const thicknessMultiple = 6;
 const height = 100;
