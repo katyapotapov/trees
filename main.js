@@ -25,24 +25,10 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Now we initialize the L-system with the axiom
-// const axiom = "X";
-// const rules = { F: "FF", X: "F-[[X]++X]+F[+FX]-X" };
 const axiom = "F";
 const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
-// const rules = {
-//   F: "F-F+F#F", // Rule to elongate and create branches
-// };
-// const rules = {
-//   F: "F&[-F#F*G$G&G][-F#F*G$G&G][*F$F]", // Rule to elongate and create branches
-//   G: "[*F$F][FFF][$F***F$F]", // Rule to elongate and create branches
-// };
-// const axiom = "F";
-// const rules = {
-//   F: "F&[+#F+F][-$F-F][*&F+F][/#F-F]", // Rule to create complex branching
-//   X: "F[-X&F][+X*F][#X$F]", // Adding variation in branch angles and positions
-// };
-// const angle = (22.5 * Math.PI) / 180;
+// const rules = { F: "F[-G]", G: "F[+G]" };
+// const rules = { F: "F[-F]" };
 let angle = (29 * Math.PI) / 180;
 let n = 3;
 const thickness = 1;
@@ -68,14 +54,18 @@ window.updateLSystem = function () {
   while (tree.children.length > 0) {
     tree.remove(tree.children[0]);
   }
+  scene.remove(tree);
 
   lSystem = lSystemForN(axiom, rules, n);
   parseLSystem(lSystem, angle, height);
+  scene.add(tree);
+  tree.rotation.y = 0;
 
   updateCameraFocus();
 };
 
-var seed = Math.random() * 1000;
+// var seed = Math.random() * 1000;
+var seed = 1;
 function random() {
   var x = Math.sin(seed++) * 10000;
   return x - Math.floor(x);
@@ -121,20 +111,22 @@ function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB, h) {
 }
 
 const tree = new THREE.Group();
+const validCharsRegex = /^[a-zA-Z]+$/;
 
 function parseLSystem(lSystem, angle, height) {
   let posStack = [[0, 0, 0]];
   let angleStack = [[0, 0, 0]];
   let radStack = [(n + thickness) * thicknessMultiple];
+  let parentStack = [tree];
   for (let i = 0; i < lSystem.length; i++) {
-    if (lSystem[i] == "F") {
+    if (validCharsRegex.test(lSystem[i])) {
       let curPos = posStack[posStack.length - 1];
       const curAngle = angleStack[angleStack.length - 1];
       let curH = height;
       if (i == 0) {
         curH = height * trunkMultiple;
       }
-      curH *= 2 * random();
+      curH *= 2; // * random();
       curH *= n + 2 - posStack.length;
 
       if (radStack.length <= posStack.length) {
@@ -142,12 +134,10 @@ function parseLSystem(lSystem, angle, height) {
         console.log(radStack);
       }
 
-      // const radTop = (n + thickness - depth - 1) * thicknessMultiple;
       let radTop = radStack[posStack.length];
       let radBottom = radStack[posStack.length - 1];
 
       if (i == 0) {
-        // radTop *= trunkThicknessMultiple;
         radBottom *= trunkThicknessMultiple;
       }
       const cylinder = addCylinder(
@@ -161,13 +151,11 @@ function parseLSystem(lSystem, angle, height) {
         radBottom,
         curH
       );
-      tree.add(cylinder);
-      // curPos[0] -= Math.sin(curAngle[1]) * cylinderHeight;
-      // curPos[1] += Math.cos(curAngle[1]) * cylinderHeight;
-      // curPos[2] += Math.sin(curAngle[0]) * cylinderHeight;
+      parentStack[parentStack.length - 1].add(cylinder);
+      parentStack[parentStack.length - 1] = cylinder;
       let localTop = new THREE.Vector3(0, curH, 0);
-      let worldTop = cylinder.localToWorld(localTop.clone());
-      posStack[posStack.length - 1] = [worldTop.x, worldTop.y, worldTop.z];
+      //localTop.applyEuler(cylinder.rotation);
+      posStack[posStack.length - 1] = [localTop.x, localTop.y, localTop.z];
     } else if (lSystem[i] == "-") {
       angleStack[angleStack.length - 1][2] -= angle;
     } else if (lSystem[i] == "+") {
@@ -183,17 +171,16 @@ function parseLSystem(lSystem, angle, height) {
     } else if (lSystem[i] == "[") {
       posStack.push(posStack[posStack.length - 1].slice());
       angleStack.push(angleStack[angleStack.length - 1].slice());
+      parentStack.push(parentStack[parentStack.length - 1]);
     } else if (lSystem[i] == "]") {
       posStack.pop();
       angleStack.pop();
+      parentStack.pop();
     }
   }
 }
 
 parseLSystem(lSystem, angle, height);
-
-// tree.add(addCylinder(0, 0, 0));
-// tree.add(addCylinder(0, 10, 20));
 scene.add(tree);
 
 function createHill(x, z, height, baseRadius, topRadius) {
@@ -267,8 +254,10 @@ function updateCameraFocus() {
 }
 updateCameraFocus(); // Just need to update the camera once at the start
 
+let ctr = 0;
 function animate() {
-  tree.rotateY(0.025);
+  ctr++;
+  if (ctr % 100 == 0) tree.rotateY(0.5);
   renderer.render(scene, camera);
 }
 renderer.setAnimationLoop(animate);
