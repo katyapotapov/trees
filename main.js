@@ -29,10 +29,14 @@ document.body.appendChild(renderer.domElement);
 // const axiom = "X";
 // const rules = { F: "FF", X: "F-[[X]++X]+F[+FX]-X" };
 const axiom = "F";
-// const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
-const rules = {
-  F: "F-F+F#F", // Rule to elongate and create branches
-};
+const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
+// const rules = {
+//   F: "F-F+F#F", // Rule to elongate and create branches
+// };
+// const rules = {
+//   F: "F&[-F#F*G$G&G][-F#F*G$G&G][*F$F]", // Rule to elongate and create branches
+//   G: "[*F$F][FFF][$F***F$F]", // Rule to elongate and create branches
+// };
 // const axiom = "F";
 // const rules = {
 //   F: "F&[+#F+F][-$F-F][*&F+F][/#F-F]", // Rule to create complex branching
@@ -44,7 +48,7 @@ const n = 3;
 const thickness = 1;
 const thicknessMultiple = 6;
 const height = 100;
-const trunkMultiple = 5;
+const trunkMultiple = 3;
 const trunkThicknessMultiple = 3;
 
 var seed = Math.random() * 1000;
@@ -83,7 +87,7 @@ function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB, h) {
   const geometry = new THREE.CylinderGeometry(radT, radB, h, 32);
 
   geometry.translate(0, h / 2, 0);
-  const material = new THREE.MeshBasicMaterial({ color: 0x382921 });
+  const material = new THREE.MeshBasicMaterial({ color: 0x82553c });
   const cylinder = new THREE.Mesh(geometry, material);
   cylinder.rotateX(rotX);
   cylinder.rotateZ(rotZ);
