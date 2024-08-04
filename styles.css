@@ -1,0 +1,28 @@
+body { margin: 0; }
+#lSystemForm {
+    border: 1px solid #805757;
+    border-radius: 5px;
+    z-index: 1000;
+}
+#lSystemForm input, #lSystemForm button {
+    margin-top: 5px;
+    width: 100%;
+    box-sizing: border-box; /* Ensures padding doesn't affect width */
+}
+#lSystemForm {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border: 1px solid #805757;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+#lSystemForm label, #lSystemForm input, #lSystemForm button {
+    display: block;
+    margin-top: 5px;
+    width: 100%;
+    box-sizing: border-box;
+}

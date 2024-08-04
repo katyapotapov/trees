@@ -43,13 +43,37 @@ const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
 //   X: "F[-X&F][+X*F][#X$F]", // Adding variation in branch angles and positions
 // };
 // const angle = (22.5 * Math.PI) / 180;
-const angle = (29 * Math.PI) / 180;
-const n = 3;
+let angle = (29 * Math.PI) / 180;
+let n = 3;
 const thickness = 1;
 const thicknessMultiple = 6;
-const height = 100;
+let height = 100;
 const trunkMultiple = 3;
 const trunkThicknessMultiple = 3;
+
+document.getElementById("angle").value = ((angle * 180) / Math.PI).toFixed(1);
+document.getElementById("n").value = n;
+document.getElementById("height").value = height.toFixed(1);
+
+window.updateLSystem = function () {
+  const newAngle =
+    (parseFloat(document.getElementById("angle").value) * Math.PI) / 180;
+  const newN = parseInt(document.getElementById("n").value);
+  const newHeight = parseFloat(document.getElementById("height").value);
+
+  angle = newAngle;
+  n = newN;
+  height = newHeight;
+
+  while (tree.children.length > 0) {
+    tree.remove(tree.children[0]);
+  }
+
+  lSystem = lSystemForN(axiom, rules, n);
+  parseLSystem(lSystem, angle, height);
+
+  updateCameraFocus();
+};
 
 var seed = Math.random() * 1000;
 function random() {
