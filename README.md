@@ -1,7 +1,6 @@
 3D L-system trees!
 
-https://github.com/katyapotapov/trees/assets/6101008/176778b0-e3c1-4e19-b765-dd9b46e0e603
-
+https://github.com/user-attachments/assets/22be9fc5-1c04-429a-8024-56d754d50a18
 
 # Todos
 
