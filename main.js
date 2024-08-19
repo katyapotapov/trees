@@ -25,8 +25,8 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-const axiom = "F";
-const rules = { F: "F[-F][+F][#F][$F][*F][&F]" };
+let axiom = "F";
+let rules = { F: "F[-F][+F][#F$F][$F][*F][&F&F-$F]" };
 // const rules = { F: "F[-G]", G: "F[+G]" };
 // const rules = { F: "F[-F]" };
 let angle = (29 * Math.PI) / 180;
@@ -40,17 +40,34 @@ const trunkThicknessMultiple = 3;
 document.getElementById("angle").value = ((angle * 180) / Math.PI).toFixed(1);
 document.getElementById("n").value = n;
 document.getElementById("height").value = height.toFixed(1);
+//document.getElementById("axiom").value = axiom;
+//document.getElementById("rules").value = rules;
 
 window.updateLSystem = function () {
   const newAngle =
     (parseFloat(document.getElementById("angle").value) * Math.PI) / 180;
   const newN = parseInt(document.getElementById("n").value);
   const newHeight = parseFloat(document.getElementById("height").value);
+  const newAxiom = document.getElementById("axiom").value;
+  const newRulesInput = document.getElementById("rules").value;
 
+  // Convert rules from string to an object
+  const newRules = {};
+  newRulesInput.split(";").forEach((rule) => {
+    const [key, value] = rule.split(":");
+    if (key && value) {
+      newRules[key.trim()] = value.trim();
+    }
+  });
+
+  // Update global variables
   angle = newAngle;
   n = newN;
   height = newHeight;
+  axiom = newAxiom || axiom; // Keep the old axiom if the new one is empty
+  rules = Object.keys(newRules).length ? newRules : rules; // Keep the old rules if the new one is empty
 
+  // Clear previous tree and redraw
   while (tree.children.length > 0) {
     tree.remove(tree.children[0]);
   }
@@ -63,6 +80,12 @@ window.updateLSystem = function () {
 
   updateCameraFocus();
 };
+
+// Set default values for the input fields
+document.getElementById("axiom").value = axiom;
+document.getElementById("rules").value = Object.entries(rules)
+  .map(([k, v]) => `${k}: ${v}`)
+  .join("; ");
 
 // var seed = Math.random() * 1000;
 var seed = 1;
@@ -114,6 +137,8 @@ const tree = new THREE.Group();
 const validCharsRegex = /^[a-zA-Z]+$/;
 
 function parseLSystem(lSystem, angle, height) {
+  const treeRotation = new THREE.Quaternion();
+  treeRotation.copy(tree.quaternion);
   let posStack = [[0, 0, 0]];
   let angleStack = [[0, 0, 0]];
   let radStack = [(n + thickness) * thicknessMultiple];
@@ -178,6 +203,7 @@ function parseLSystem(lSystem, angle, height) {
       parentStack.pop();
     }
   }
+  tree.applyQuaternion(treeRotation);
 }
 
 parseLSystem(lSystem, angle, height);
@@ -254,10 +280,8 @@ function updateCameraFocus() {
 }
 updateCameraFocus(); // Just need to update the camera once at the start
 
-let ctr = 0;
 function animate() {
-  ctr++;
-  if (ctr % 100 == 0) tree.rotateY(0.5);
+  tree.rotateY(0.025);
   renderer.render(scene, camera);
 }
 renderer.setAnimationLoop(animate);
