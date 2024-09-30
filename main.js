@@ -25,47 +25,31 @@ const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-let axiom = "F";
-let rules = { F: "F[-F][+F][#F$F][$F][*F][&F&F-$F]" };
-// const rules = { F: "F[-G]", G: "F[+G]" };
-// const rules = { F: "F[-F]" };
-let angle = (29 * Math.PI) / 180;
-let n = 3;
-const thickness = 1;
-const thicknessMultiple = 6;
-let height = 100;
-const trunkMultiple = 3;
-const trunkThicknessMultiple = 3;
+let nStemLevels = 3;
+let trunkThicknessRatio = 50; // trunk height / trunk radius
+let stemThicknessRatio = 20; // stem height / stem radius (excluding trunk)
+let nStemSegments = [1, 1, 1]; // number of segments each stem is split up into; 1 for each stem level
+let stemAngle = 30 * (Math.PI / 180); // Z-axis rotation in radians (relative to branch)
+let stemHeights = [100, 30, 20];
+let stemOffset = 0.2; // how far along the branch's length do we want the next branches to form? Value should be 0-1
+let stemOffsetAngle = 30 * (Math.PI / 180); // how much should each successive offset be angled?
+let nBranches = [4, 4, 4]; // how many branches to add at each level
 
-document.getElementById("angle").value = ((angle * 180) / Math.PI).toFixed(1);
-document.getElementById("n").value = n;
-document.getElementById("height").value = height.toFixed(1);
-//document.getElementById("axiom").value = axiom;
-//document.getElementById("rules").value = rules;
+document.getElementById("stemAngle").value = (
+  (stemAngle * 180) /
+  Math.PI
+).toFixed(1);
+document.getElementById("nStemLevels").value = nStemLevels;
+document.getElementById("trunkThicknessRatio").value =
+  trunkThicknessRatio.toFixed(1);
 
 window.updateLSystem = function () {
-  const newAngle =
-    (parseFloat(document.getElementById("angle").value) * Math.PI) / 180;
-  const newN = parseInt(document.getElementById("n").value);
-  const newHeight = parseFloat(document.getElementById("height").value);
-  const newAxiom = document.getElementById("axiom").value;
-  const newRulesInput = document.getElementById("rules").value;
-
-  // Convert rules from string to an object
-  const newRules = {};
-  newRulesInput.split(";").forEach((rule) => {
-    const [key, value] = rule.split(":");
-    if (key && value) {
-      newRules[key.trim()] = value.trim();
-    }
-  });
-
-  // Update global variables
-  angle = newAngle;
-  n = newN;
-  height = newHeight;
-  axiom = newAxiom || axiom; // Keep the old axiom if the new one is empty
-  rules = Object.keys(newRules).length ? newRules : rules; // Keep the old rules if the new one is empty
+  stemAngle =
+    (parseFloat(document.getElementById("stemAngle").value) * Math.PI) / 180;
+  nStemLevels = parseInt(document.getElementById("nStemLevels").value);
+  trunkThicknessRatio = parseFloat(
+    document.getElementById("trunkThicknessRatio").value
+  );
 
   // Clear previous tree and redraw
   while (tree.children.length > 0) {
@@ -73,19 +57,12 @@ window.updateLSystem = function () {
   }
   scene.remove(tree);
 
-  lSystem = lSystemForN(axiom, rules, n);
-  parseLSystem(lSystem, angle, height);
+  addTree(angle, height);
   scene.add(tree);
   tree.rotation.y = 0;
 
   updateCameraFocus();
 };
-
-// Set default values for the input fields
-document.getElementById("axiom").value = axiom;
-document.getElementById("rules").value = Object.entries(rules)
-  .map(([k, v]) => `${k}: ${v}`)
-  .join("; ");
 
 // var seed = Math.random() * 1000;
 var seed = 1;
@@ -94,32 +71,6 @@ function random() {
   return x - Math.floor(x);
 }
 
-function lSystemForN(axiom, rules, n) {
-  let curState = axiom;
-  let nextState = "";
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < curState.length; j++) {
-      let dirReplaced = false;
-      for (const [k, v] of Object.entries(rules)) {
-        if (curState[j] == k) {
-          nextState += v;
-          dirReplaced = true;
-          break;
-        }
-      }
-      if (!dirReplaced) nextState += curState[j];
-    }
-    curState = nextState;
-    nextState = "";
-  }
-  return curState;
-}
-
-let lSystem = lSystemForN(axiom, rules, n);
-
-// lSystem = "F#$$$$$+F#+F#+F#+F#+F";
-console.log(lSystem);
-
 function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB, h) {
   const geometry = new THREE.CylinderGeometry(radT, radB, h, 32);
 
@@ -127,6 +78,7 @@ function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB, h) {
   const material = new THREE.MeshBasicMaterial({ color: 0x82553c });
   const cylinder = new THREE.Mesh(geometry, material);
   cylinder.rotateX(rotX);
+  cylinder.rotateY(rotY);
   cylinder.rotateZ(rotZ);
   cylinder.position.set(posX, posY, posZ);
 
@@ -134,79 +86,75 @@ function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB, h) {
 }
 
 const tree = new THREE.Group();
-const validCharsRegex = /^[a-zA-Z]+$/;
 
-function parseLSystem(lSystem, angle, height) {
-  const treeRotation = new THREE.Quaternion();
-  treeRotation.copy(tree.quaternion);
-  let posStack = [[0, 0, 0]];
-  let angleStack = [[0, 0, 0]];
-  let radStack = [(n + thickness) * thicknessMultiple];
-  let parentStack = [tree];
-  for (let i = 0; i < lSystem.length; i++) {
-    if (validCharsRegex.test(lSystem[i])) {
-      let curPos = posStack[posStack.length - 1];
-      const curAngle = angleStack[angleStack.length - 1];
-      let curH = height;
-      if (i == 0) {
-        curH = height * trunkMultiple;
-      }
-      curH *= 2; // * random();
-      curH *= n + 2 - posStack.length;
-
-      if (radStack.length <= posStack.length) {
-        radStack.push(radStack[radStack.length - 1] * 0.7);
-        console.log(radStack);
-      }
-
-      let radTop = radStack[posStack.length];
-      let radBottom = radStack[posStack.length - 1];
-
-      if (i == 0) {
-        radBottom *= trunkThicknessMultiple;
-      }
-      const cylinder = addCylinder(
-        curPos[0],
-        curPos[1],
-        curPos[2],
-        curAngle[0],
-        curAngle[1],
-        curAngle[2],
-        radTop,
-        radBottom,
-        curH
-      );
-      parentStack[parentStack.length - 1].add(cylinder);
-      parentStack[parentStack.length - 1] = cylinder;
-      let localTop = new THREE.Vector3(0, curH, 0);
-      //localTop.applyEuler(cylinder.rotation);
-      posStack[posStack.length - 1] = [localTop.x, localTop.y, localTop.z];
-    } else if (lSystem[i] == "-") {
-      angleStack[angleStack.length - 1][2] -= angle;
-    } else if (lSystem[i] == "+") {
-      angleStack[angleStack.length - 1][2] += angle;
-    } else if (lSystem[i] == "#") {
-      angleStack[angleStack.length - 1][0] -= angle;
-    } else if (lSystem[i] == "*") {
-      angleStack[angleStack.length - 1][0] += angle;
-    } else if (lSystem[i] == "$") {
-      angleStack[angleStack.length - 1][1] -= angle;
-    } else if (lSystem[i] == "&") {
-      angleStack[angleStack.length - 1][1] += angle;
-    } else if (lSystem[i] == "[") {
-      posStack.push(posStack[posStack.length - 1].slice());
-      angleStack.push(angleStack[angleStack.length - 1].slice());
-      parentStack.push(parentStack[parentStack.length - 1]);
-    } else if (lSystem[i] == "]") {
-      posStack.pop();
-      angleStack.pop();
-      parentStack.pop();
-    }
+function addStem(
+  parent,
+  nStemSegments,
+  stemAngle,
+  stemThicknessRatio,
+  stemHeight,
+  stemOffset,
+  stemOffsetAngle
+) {
+  // TODO don't ignore stem segments
+  const radius = stemHeight / stemThicknessRatio;
+  let stemOffsetLength = 0;
+  if (stemOffset != 0) {
+    stemOffsetLength = parent.geometry.parameters.height * stemOffset;
   }
-  tree.applyQuaternion(treeRotation);
+  let stem = addCylinder(
+    0,
+    stemOffsetLength,
+    0,
+    0,
+    0,
+    stemAngle,
+    radius,
+    radius,
+    stemHeight
+  );
+
+  //stem.rotateY(stemOffsetAngle);
+
+  parent.add(stem);
+  return stem;
 }
 
-parseLSystem(lSystem, angle, height);
+// trunk
+let trunk = addStem(
+  tree,
+  nStemSegments[0],
+  0,
+  trunkThicknessRatio,
+  stemHeights[0],
+  0,
+  0
+);
+
+for (let stemLevel = 1; stemLevel < 2; stemLevel++) {
+  for (let curBranch = 1; curBranch <= nBranches[stemLevel]; curBranch++) {
+    addStem(
+      trunk,
+      nStemSegments[stemLevel],
+      stemAngle,
+      stemThicknessRatio,
+      stemHeights[stemLevel],
+      stemOffset * curBranch,
+      0 //(stemOffsetAngle * curBranch) % (2 * Math.PI)
+    );
+  }
+}
+
+// branch
+let branch = addStem(
+  trunk,
+  nStemSegments[1],
+  stemAngle,
+  stemThicknessRatio,
+  stemHeights[1],
+  stemOffset
+);
+
 scene.add(tree);
 
 function createHill(x, z, height, baseRadius, topRadius) {

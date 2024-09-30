@@ -7,18 +7,12 @@
 	</head>
 	<body>
 		<div id="lSystemForm">
-			<label for="angle">Angle (degrees):</label>
-			<input type="number" id="angle" name="angle" step="0.1">
-			<label for="n">Iterations (n):</label>
-			<input type="number" id="n" name="n">
-			<label for="height">Height:</label>
-			<input type="number" id="height" name="height" step="0.1">
-			
-			<!-- New input fields for axiom and rules -->
-			<label for="axiom">Axiom:</label>
-			<input type="text" id="axiom" name="axiom">
-			<label for="rules">Rules:</label>
-			<input type="text" id="rules" name="rules">
+			<label for="stemAngle">Stem angle (degrees):</label>
+			<input type="number" id="stemAngle" name="stemAngle" step="0.1">
+			<label for="nStemLevels">Number of stem levels:</label>
+			<input type="number" id="nStemLevels" name="nStemLevels">
+			<label for="trunkThicknessRatio">Trunk thickness:</label>
+			<input type="number" id="trunkThicknessRatio" name="trunkThicknessRatio" step="0.1">
 			
 			<button onclick="updateLSystem()">Update</button>
 		</div>
