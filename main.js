@@ -107,14 +107,12 @@ function addStem(
     stemOffsetLength,
     0,
     0,
-    0,
+    stemOffsetAngle,
     stemAngle,
     radius,
     radius,
     stemHeight
   );
-
-  //stem.rotateY(stemOffsetAngle);
 
   parent.add(stem);
   return stem;
@@ -140,20 +138,10 @@ for (let stemLevel = 1; stemLevel < 2; stemLevel++) {
       stemThicknessRatio,
       stemHeights[stemLevel],
       stemOffset * curBranch,
-      0 //(stemOffsetAngle * curBranch) % (2 * Math.PI)
+      (stemOffsetAngle * curBranch) % (2 * Math.PI)
     );
   }
 }
-
-// branch
-let branch = addStem(
-  trunk,
-  nStemSegments[1],
-  stemAngle,
-  stemThicknessRatio,
-  stemHeights[1],
-  stemOffset
-);
 
 scene.add(tree);
 
