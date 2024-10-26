@@ -36,39 +36,45 @@ renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
 // ---------- Tree settings ------------------
+// Based on: https://courses.cs.duke.edu/fall02/cps124/resources/p119-weber.pdf
 
-let nStemLevels = 3;
-let trunkThicknessRatio = 50; // trunk height / trunk radius
-let stemThicknessRatio = 20; // stem height / stem radius (excluding trunk)
+// Stem splits (e.g. offshoots)
+let nSplitLevels = 3;
+let trunkRadius = 10;
+
+// TODO this thickness ratio isn't really doing well here or below, can we do radius as a function of the level instead?
+let splitRadius = 3;
+let splitRadiusReduction = 0.4; // How much smaller the radius gets each level
 let nStemSegments = [1, 1, 1]; // number of segments each stem is split up into; 1 for each stem level
-let stemAngle = 30 * (Math.PI / 180); // Z-axis rotation in radians (relative to branch)
-let stemHeights = [100, 30, 20];
-let stemOffset = 0.2; // how far along the branch's length do we want the next branches to form? Value should be 0-1
-let stemOffsetAngle = 30 * (Math.PI / 180); // how much should each successive offset be angled?
+let splitAngle = 30 * (Math.PI / 180); // Z-axis rotation in radians (relative to branch)
+let splitHeights = [100, 70, 80];
+let splitOffset = 0.2; // how far along the branch's length do we want the next branches to form? Value should be 0-1
+let splitOffsetAngle = 100 * (Math.PI / 180); // how much should each successive offset be angled?
 
 // how many stems should be created at each level, relative to its parent
 // (e.g. 3rd level will actually have 3rd level * 2nd level * 1st level number of stems)
-let nStems = [1, 3, 4];
+let nStems = [1, 3, 2];
+
+// Stem children (e.g. when a stem splits evenly in two at its end)
+let nChildLevels = 2;
+let numChildren = 3;
+let childThicknessRatio = 40;
+let childSplitAngle = 40 * (Math.PI / 180); // how much should each successive offset be angled?
+let childHeights = [100, 70, 80];
 
 // -------------------------------------------
 
 // --------- Update from menu changes --------
 
 document.getElementById("stemAngle").value = (
-  (stemAngle * 180) /
+  (splitAngle * 180) /
   Math.PI
 ).toFixed(1);
-document.getElementById("nStemLevels").value = nStemLevels;
-document.getElementById("trunkThicknessRatio").value =
-  trunkThicknessRatio.toFixed(1);
-
+document.getElementById("nStemLevels").value = nSplitLevels;
 window.updateLSystem = function () {
-  stemAngle =
+  splitAngle =
     (parseFloat(document.getElementById("stemAngle").value) * Math.PI) / 180;
-  nStemLevels = parseInt(document.getElementById("nStemLevels").value);
-  trunkThicknessRatio = parseFloat(
-    document.getElementById("trunkThicknessRatio").value
-  );
+  nSplitLevels = parseInt(document.getElementById("nStemLevels").value);
 
   // Clear previous tree and redraw
   while (tree.children.length > 0) {
@@ -127,13 +133,12 @@ function addStem(
   parent,
   nStemSegments,
   stemAngle,
-  stemThicknessRatio,
+  stemRadius,
   stemHeight,
   stemOffset,
   stemOffsetAngle
 ) {
   // TODO don't ignore stem segments
-  const radius = stemHeight / stemThicknessRatio;
   let stemOffsetLength = 0;
   if (stemOffset != 0) {
     stemOffsetLength = parent.geometry.parameters.height * stemOffset;
@@ -145,8 +150,8 @@ function addStem(
     0,
     stemOffsetAngle,
     stemAngle,
-    radius,
-    radius,
+    stemRadius * (1 - splitRadiusReduction),
+    stemRadius,
     stemHeight
   );
 
@@ -159,8 +164,8 @@ let trunk = addStem(
   tree,
   nStemSegments[0],
   0,
-  trunkThicknessRatio,
-  stemHeights[0],
+  trunkRadius,
+  splitHeights[0],
   0,
   0
 );
@@ -172,11 +177,11 @@ function makeRecusiveBranches(stem, stemLevel) {
       addStem(
         stem,
         nStemSegments[stemLevel],
-        stemAngle,
-        stemThicknessRatio,
-        stemHeights[stemLevel],
-        stemOffset * curBranch,
-        (stemOffsetAngle * curBranch) % (2 * Math.PI)
+        splitAngle,
+        splitRadius * (1 - splitRadiusReduction),
+        splitHeights[stemLevel],
+        splitOffset * curBranch,
+        (splitOffsetAngle * curBranch) % (2 * Math.PI)
       )
     );
   }
@@ -185,8 +190,38 @@ function makeRecusiveBranches(stem, stemLevel) {
   }
 }
 
+function makeRecursiveChildren(stem, childLevel) {
+  // by omitting stem here, we are skipping creating recursive children for the trunk
+  let childrenCurLevel = [];
+  if (childLevel >= nChildLevels) {
+    return childrenCurLevel;
+  }
+  // TODO the children could be pushed to the edge of the trunk for bigger aesthetics
+  // TODO the second level children are too thicc
+  for (let i = 0; i < numChildren; i++) {
+    childrenCurLevel.push(
+      addStem(
+        stem,
+        1,
+        childSplitAngle,
+        splitRadius,
+        childHeights[childLevel],
+        1,
+        180 * i
+      )
+    );
+  }
+  for (let child of childrenCurLevel) {
+    childrenCurLevel.concat(makeRecursiveChildren(child, childLevel + 1));
+  }
+  return childrenCurLevel;
+}
+
 scene.add(tree);
-makeRecusiveBranches(trunk, 1);
+let children = makeRecursiveChildren(trunk, 0);
+for (let child of children) {
+  makeRecusiveBranches(child, 1);
+}
 
 function createHill(x, z, height, baseRadius, topRadius) {
   const hillGeometry = new THREE.CylinderGeometry(
