@@ -14,16 +14,28 @@ const texture = loader.load([
 
 scene.background = texture;
 
-const camera = new THREE.PerspectiveCamera(
-  75,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  800000
-);
+// ----------------- Display -----------------
+
+const fov = 75;
+
+// Aspect ratio - just the ratio of the window size
+const aspect = window.innerWidth / window.innerHeight;
+
+// Decrease this if you want to see nearer things
+const near = 0.1;
+
+// Increase this if you want to see farther things
+const far = 800000;
+
+const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+
+// -------------------------------------------
 
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
+
+// ---------- Tree settings ------------------
 
 let nStemLevels = 3;
 let trunkThicknessRatio = 50; // trunk height / trunk radius
@@ -33,7 +45,14 @@ let stemAngle = 30 * (Math.PI / 180); // Z-axis rotation in radians (relative to
 let stemHeights = [100, 30, 20];
 let stemOffset = 0.2; // how far along the branch's length do we want the next branches to form? Value should be 0-1
 let stemOffsetAngle = 30 * (Math.PI / 180); // how much should each successive offset be angled?
-let nBranches = [4, 4, 4]; // how many branches to add at each level
+
+// how many stems should be created at each level, relative to its parent
+// (e.g. 3rd level will actually have 3rd level * 2nd level * 1st level number of stems)
+let nStems = [1, 3, 4];
+
+// -------------------------------------------
+
+// --------- Update from menu changes --------
 
 document.getElementById("stemAngle").value = (
   (stemAngle * 180) /
@@ -64,6 +83,8 @@ window.updateLSystem = function () {
   updateCameraFocus();
 };
 
+// -------------------------------------------
+
 // var seed = Math.random() * 1000;
 var seed = 1;
 function random() {
@@ -71,10 +92,27 @@ function random() {
   return x - Math.floor(x);
 }
 
-function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB, h) {
-  const geometry = new THREE.CylinderGeometry(radT, radB, h, 32);
+function addCylinder(
+  posX,
+  posY,
+  posZ,
+  rotX,
+  rotY,
+  rotZ,
+  radiusTop,
+  radiusBottom,
+  height
+) {
+  const radialSegments = 32;
+  const geometry = new THREE.CylinderGeometry(
+    radiusTop,
+    radiusBottom,
+    height,
+    radialSegments
+  );
 
-  geometry.translate(0, h / 2, 0);
+  // make it vertical
+  geometry.translate(0, height / 2, 0);
   const material = new THREE.MeshBasicMaterial({ color: 0x82553c });
   const cylinder = new THREE.Mesh(geometry, material);
   cylinder.rotateX(rotX);
@@ -84,8 +122,6 @@ function addCylinder(posX, posY, posZ, rotX, rotY, rotZ, radT, radB, h) {
 
   return cylinder;
 }
-
-const tree = new THREE.Group();
 
 function addStem(
   parent,
@@ -118,7 +154,7 @@ function addStem(
   return stem;
 }
 
-// trunk
+const tree = new THREE.Group();
 let trunk = addStem(
   tree,
   nStemSegments[0],
@@ -129,21 +165,28 @@ let trunk = addStem(
   0
 );
 
-for (let stemLevel = 1; stemLevel < 2; stemLevel++) {
-  for (let curBranch = 1; curBranch <= nBranches[stemLevel]; curBranch++) {
-    addStem(
-      trunk,
-      nStemSegments[stemLevel],
-      stemAngle,
-      stemThicknessRatio,
-      stemHeights[stemLevel],
-      stemOffset * curBranch,
-      (stemOffsetAngle * curBranch) % (2 * Math.PI)
+function makeRecusiveBranches(stem, stemLevel) {
+  let stemsCurLevel = [];
+  for (let curBranch = 1; curBranch <= nStems[stemLevel]; curBranch++) {
+    stemsCurLevel.push(
+      addStem(
+        stem,
+        nStemSegments[stemLevel],
+        stemAngle,
+        stemThicknessRatio,
+        stemHeights[stemLevel],
+        stemOffset * curBranch,
+        (stemOffsetAngle * curBranch) % (2 * Math.PI)
+      )
     );
+  }
+  for (let stem of stemsCurLevel) {
+    makeRecusiveBranches(stem, stemLevel + 1);
   }
 }
 
 scene.add(tree);
+makeRecusiveBranches(trunk, 1);
 
 function createHill(x, z, height, baseRadius, topRadius) {
   const hillGeometry = new THREE.CylinderGeometry(
@@ -160,11 +203,12 @@ function createHill(x, z, height, baseRadius, topRadius) {
 }
 const numHills = 20;
 for (let i = 0; i < numHills; i++) {
-  const x = (i / numHills) * 200000 - 100000; // * 200000 - 100000;
-  const z = Math.random() * 8000 - 50000; // Random position in z
-  const height = Math.random() * 3000 + 5000; // Random height between 300 and 500
-  const baseRadius = 20000 + 800; // Base radius between 800 and 1000
-  const topRadius = Math.random() * 1000 + 700; // Top radius between 700 and 800
+  // These numbers were determined via trial and error
+  const x = (i / numHills) * 200000 - 100000;
+  const z = Math.random() * 8000 - 50000;
+  const height = Math.random() * 3000 + 5000;
+  const baseRadius = 20000 + 800;
+  const topRadius = Math.random() * 1000 + 700;
 
   createHill(x, z, height, baseRadius, topRadius);
 }
